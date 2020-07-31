@@ -1,22 +1,34 @@
 package termin
 
-import "os"
+import (
+	"bufio"
+	"io"
+	"log"
+	"os"
+
+	"github.com/KlyuchnikovV/termin/low_level/raw_mode"
+)
 
 type Termin struct {
-	out chan []byte
+	out    chan rune
+
+	file *os.File
 }
 
 func New() *Termin {
 	return &Termin{
-		out: make(chan []byte, 1),
+		out: make(chan rune, 1),
 	}
 }
 
-func (t *Termin) GetChan() chan []byte {
+func (t *Termin) GetChan() chan rune {
 	return t.out
 }
 
 func (t *Termin) StartReading(async bool) {
+	if t.out == nil {
+		t.out = make(chan rune, 1)
+	}
 	if async {
 		go t.catch()
 	} else {
@@ -24,16 +36,34 @@ func (t *Termin) StartReading(async bool) {
 	}
 }
 
+func (t *Termin) Stop() {
+	close(t.out)
+	t.file.Close()
+}
+
 func (t *Termin) catch() {
+	raw_mode.EnableRawMode()
+	defer raw_mode.DisableRawMode()
+
+	var err error
+	t.file, err = os.Open("/dev/tty")
+	if err != nil {
+		t.file = os.Stdin
+	}
+
+	in := bufio.NewReader(t.file)
+	defer func() {
+		if err := recover(); err != nil {
+			log.Printf("ERROR: %#v", err)
+		}
+	}()
+
 	for {
-		var bytes = make([]byte, 6)
-		n, err := os.Stdin.Read(bytes)
-		if err != nil {
+		r, _, err := in.ReadRune()
+		if err != nil && err != io.EOF {
+			// TODO: remake
 			panic(err)
 		}
-		if n < 1 {
-			continue
-		}
-		t.out <- bytes
+		t.out <- r
 	}
 }
