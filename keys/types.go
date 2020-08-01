@@ -1,17 +1,17 @@
 package keys
 
 type KeyboardKey interface {
-	String() string
-	getRune() rune
+	GetRune() rune
+	string() string
 }
 
 type symbolChar rune
 
-func (s symbolChar) String() string {
+func (s symbolChar) string() string {
 	return string(s)
 }
 
-func (s symbolChar) getRune() rune {
+func (s symbolChar) GetRune() rune {
 	return rune(s)
 }
 
@@ -19,11 +19,11 @@ func (s symbolChar) getRune() rune {
 
 type controlChar rune
 
-func (c controlChar) String() string {
+func (c controlChar) string() string {
 	return string(c)
 }
 
-func (c controlChar) getRune() rune {
+func (c controlChar) GetRune() rune {
 	return rune(c)
 }
 
@@ -162,4 +162,3 @@ const (
 	EquivalencySignTilde symbolChar = '\x7E'
 	Delete               symbolChar = '\x7F'
 )
-

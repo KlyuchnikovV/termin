@@ -19,7 +19,7 @@ func IsControlChar(r rune) bool {
 }
 
 func isBetween(r rune, left, right KeyboardKey) bool {
-	if r >= left.getRune() && r <= right.getRune() {
+	if r >= left.GetRune() && r <= right.GetRune() {
 		return true
 	}
 	return false
