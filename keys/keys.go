@@ -1,6 +1,7 @@
 package keys
 
 type KeyboardKey interface {
+	String() string
 	getRune() rune
 }
 
@@ -23,6 +24,10 @@ func isBetween(r rune, left, right KeyboardKey) bool {
 
 type symbolChar rune
 
+func (s symbolChar) String() string {
+	return string(s)
+}
+
 func (s symbolChar) getRune() rune {
 	return rune(s)
 }
@@ -30,6 +35,10 @@ func (s symbolChar) getRune() rune {
 // .+\t([0-9A-F][0-9A-F])\t0[0-1].+\t(.+)$ conversion regex
 
 type controlChar rune
+
+func (c controlChar) String() string {
+	return string(c)
+}
 
 func (c controlChar) getRune() rune {
 	return rune(c)
