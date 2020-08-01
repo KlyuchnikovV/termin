@@ -6,28 +6,29 @@ import (
 	"log"
 	"os"
 
+	"github.com/KlyuchnikovV/termin/keys"
 	"github.com/KlyuchnikovV/termin/low_level/raw_mode"
 )
 
 type Termin struct {
-	out    chan rune
+	out chan keys.KeyboardKey
 
 	file *os.File
 }
 
 func New() *Termin {
 	return &Termin{
-		out: make(chan rune, 1),
+		out: make(chan keys.KeyboardKey, 1),
 	}
 }
 
-func (t *Termin) GetChan() chan rune {
+func (t *Termin) GetChan() chan keys.KeyboardKey {
 	return t.out
 }
 
 func (t *Termin) StartReading(async bool) {
 	if t.out == nil {
-		t.out = make(chan rune, 1)
+		t.out = make(chan keys.KeyboardKey, 1)
 	}
 	if async {
 		go t.catch()
@@ -64,6 +65,13 @@ func (t *Termin) catch() {
 			// TODO: remake
 			panic(err)
 		}
-		t.out <- r
+
+		key, ok := keys.NewKeyboardKey(r)
+		if !ok {
+			log.Printf("symbol not KeyboardKey %v\n", r)
+			return
+		}
+
+		t.out <- key
 	}
 }
