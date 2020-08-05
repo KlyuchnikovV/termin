@@ -2,7 +2,7 @@ package termin
 
 import (
 	"bufio"
-	"io"
+	"fmt"
 	"log"
 	"os"
 
@@ -13,6 +13,7 @@ import (
 type Termin struct {
 	out chan keys.KeyboardKey
 
+	in   *bufio.Reader
 	file *os.File
 }
 
@@ -52,7 +53,7 @@ func (t *Termin) catch() {
 		t.file = os.Stdin
 	}
 
-	in := bufio.NewReader(t.file)
+	t.in = bufio.NewReader(t.file)
 	defer func() {
 		if err := recover(); err != nil {
 			log.Printf("ERROR: %#v", err)
@@ -60,18 +61,69 @@ func (t *Termin) catch() {
 	}()
 
 	for {
-		r, _, err := in.ReadRune()
-		if err != nil && err != io.EOF {
+		r, _, err := t.in.ReadRune()
+		if err != nil {
 			// TODO: remake
 			panic(err)
 		}
 
-		key, ok := keys.NewKeyboardKey(r)
-		if !ok {
-			log.Printf("symbol not KeyboardKey %v\n", r)
-			return
+		key := t.processRune(r)
+		if key == nil {
+			panic(fmt.Errorf("rune %c is not valid (%#v)", r, r))
 		}
 
 		t.out <- key
 	}
+}
+
+func (t *Termin) processRune(r rune) keys.KeyboardKey {
+	var key keys.KeyboardKey
+	if keys.RuneIsKey(r, keys.Escape) {
+		key = t.processEscape()
+	} else {
+		key = keys.NewKeyboardKey(r)
+	}
+	return key
+}
+
+func (t *Termin) processEscape() keys.KeyboardKey {
+	var bufferSize = t.in.Buffered()
+	if bufferSize == 0 {
+		return keys.Escape
+	}
+
+	var ok bool
+	var runes = make([]rune, bufferSize+1)
+	runes[0] = rune(keys.Escape)
+	runes[1], ok = t.readOpeningBracket()
+	if !ok {
+		return keys.Escape
+	}
+
+	for i := 2; i < len(runes); i++ {
+		r, _, err := t.in.ReadRune()
+		if err != nil {
+			panic(err)
+		}
+		runes[i] = r
+	}
+
+	return keys.NewEscapeSequence(runes)
+}
+
+func (t *Termin) readOpeningBracket() (rune, bool) {
+	runes, err := t.in.Peek(1)
+	if err != nil {
+		panic(err)
+	}
+	var r = rune(runes[0])
+	if r != rune(keys.OpeningBracket) {
+		return r, false
+	}
+	_, _, err = t.in.ReadRune()
+	if err != nil {
+		panic(err)
+	}
+
+	return r, true
 }

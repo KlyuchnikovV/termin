@@ -1,32 +1,5 @@
 package keys
 
-type KeyboardKey interface {
-	GetRune() rune
-	string() string
-}
-
-type symbolChar rune
-
-func (s symbolChar) string() string {
-	return string(s)
-}
-
-func (s symbolChar) GetRune() rune {
-	return rune(s)
-}
-
-// .+\t([0-9A-F][0-9A-F])\t0[0-1].+\t(.+)$ conversion regex
-
-type controlChar rune
-
-func (c controlChar) string() string {
-	return string(c)
-}
-
-func (c controlChar) GetRune() rune {
-	return rune(c)
-}
-
 // Control chars
 const (
 	NullChar                controlChar = '\x00'
@@ -161,4 +134,12 @@ const (
 	ClosingBrace         symbolChar = '\x7D'
 	EquivalencySignTilde symbolChar = '\x7E'
 	Delete               symbolChar = '\x7F'
+)
+
+const (
+	DeleteKey  escapeSequence = "\x1b[3~"
+	UpArrow    escapeSequence = "\x1b[A"
+	DownArrow  escapeSequence = "\x1b[B"
+	RightArrow escapeSequence = "\x1b[C"
+	LeftArrow  escapeSequence = "\x1b[D"
 )
